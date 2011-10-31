@@ -7,6 +7,10 @@ class Tmux < Formula
 
   depends_on 'libevent'
 
+  def patches
+     DATA
+  end
+
   def install
     ENV.append "LDFLAGS", '-lresolv'
     system "./configure", "--disable-dependency-tracking",
@@ -23,3 +27,29 @@ class Tmux < Formula
     EOS
   end
 end
+
+__END__
+diff --git a/server.c b/server.c
+index 902acfa..ec1d5f8 100644
+--- a/server.c
++++ b/server.c
+@@ -35,6 +35,8 @@
+ #include <time.h>
+ #include <unistd.h>
+ 
++void *_vprocmgr_detach_from_console(unsigned int flags);
++
+ #include "tmux.h"
+ 
+ /*
+@@ -130,8 +132,8 @@ server_start(void)
+ 	 * Must daemonise before loading configuration as the PID changes so
+ 	 * $TMUX would be wrong for sessions created in the config file.
+ 	 */
+-	if (daemon(1, 0) != 0)
+-		fatal("daemon failed");
++	if (_vprocmgr_detach_from_console(0) != NULL)
++		fatalx("_vprocmgr_detach_from_console failed");
+ 
+ 	/* event_init() was called in our parent, need to reinit. */
+ 	if (event_reinit(ev_base) != 0)
